@@ -7,8 +7,22 @@
 
 // any CSS you require will output into a single css file (app.css in this case)
 require('../css/app.css');
+require('bootstrap/dist/css/bootstrap.min.css');
 
 // Need jQuery? Install it with "yarn add jquery", then uncomment to require it.
-// const $ = require('jquery');
+require('bootstrap');
+import store from './store/index.js';
+import App from './components/App.vue';
+import Vue from 'vue';
 
-console.log('Hello Webpack Encore! Edit me in assets/js/app.js');
+// EventBus
+Vue.prototype.$eventBus = new Vue();
+
+/**
+ * Create a fresh Vue Application instance
+ */
+new Vue({
+    el: '#app',
+    store,
+    render: h => h(App)
+});

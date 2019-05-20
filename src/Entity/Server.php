@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Status\ServerStatus;
+
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ServerRepository")
  */
@@ -30,6 +32,11 @@ class Server
      * @ORM\Column(type="string", length=20)
      */
     private $mac;
+
+    /**
+     * @ORM\Column(type="string", length=10, options={"default": "asleep"})
+     */
+    private $status = ServerStatus::STATUS_ASLEEP;
 
     public function getId(): ?int
     {
@@ -68,6 +75,18 @@ class Server
     public function setMac(string $mac): self
     {
         $this->mac = $mac;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }
