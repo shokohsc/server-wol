@@ -1,0 +1,17 @@
+.git
+/assets/
+/public/files/
+/var
+/tests
+.dockerignore
+.env
+.env.test
+.gitignore
+.travis.yml
+Dockerfile
+phpunit.xml.dist
+README.md
+webpack.config.js
+npm-debug.log
+yarn-error.log
+.DS_Store
