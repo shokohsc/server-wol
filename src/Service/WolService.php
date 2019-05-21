@@ -92,7 +92,7 @@ class WolService
             return $server;
         }
 
-        $wol = new PHPWakeOnLan();
+        $wol = new PHPWakeOnLan('192.168.1.255', 9);
         $wol->wake([$server['mac']]);
 
         $server['status'] = ServerStatus::STATUS_AWAKE;
