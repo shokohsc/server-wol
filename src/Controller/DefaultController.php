@@ -23,7 +23,6 @@ class DefaultController extends AbstractController
 
     /**
       * @Route("/server", methods={"GET"}))
-      * @Cache(expires="+5 minutes", public=true)
       */
     public function listServer(ServerService $service): JsonResponse
     {
@@ -32,7 +31,6 @@ class DefaultController extends AbstractController
 
     /**
       * @Route("/server/{id}", requirements={"id"="\d+"}, methods={"GET"}))
-      * @Cache(expires="+5 minutes", public=true)
       */
     public function readServer(string $id, ServerService $service): JsonResponse
     {
