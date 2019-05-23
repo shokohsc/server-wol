@@ -65,6 +65,8 @@ class DockerService
      * @param  string $id
      *
      * @return array
+     *
+     * @throws Exception
      */
     public function wake(string $id): array
     {
@@ -135,14 +137,6 @@ class DockerService
     protected function wait(ContainersCreatePostResponse201 $container)
     {
         $this->docker->containerWait($container->getId());
-    }
-
-    /**
-     * @param  ContainersCreatePostResponse201 $container
-     */
-    protected function stop(ContainersCreatePostResponse201 $container)
-    {
-        $this->docker->containerStop($container->getId());
     }
 
     /**
