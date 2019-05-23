@@ -2,8 +2,9 @@
 
 namespace App\Controller;
 
-use App\Service\WolService;
+use App\Service\DockerService;
 use App\Service\ServerService;
+use App\Service\WolService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 use Symfony\Component\HttpFoundation\Request;
@@ -74,7 +75,7 @@ class DefaultController extends AbstractController
       * @Route("/wake/{id}", requirements={"id"="\d+"}, methods={"GET"}))
       * @Cache(expires="+10 seconds", public=true)
       */
-    public function wake(string $id, WolService $service): JsonResponse
+    public function wake(string $id, DockerService $service): JsonResponse
     {
         return new JsonResponse($service->wake($id));
     }

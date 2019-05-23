@@ -8,7 +8,7 @@ use App\Service\ServerService;
 use App\Status\ServerStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use JJG\Ping;
-use \Diegonz\PHPWakeOnLan\PHPWakeOnLan;
+use Diegonz\PHPWakeOnLan\PHPWakeOnLan;
 
 class WolService
 {
