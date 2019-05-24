@@ -2,12 +2,12 @@
 
 namespace App\Service;
 
+use App\Factory\DockerFactory;
 use App\Hydrator\ServerHydrator;
 use App\Provider\ServerProvider;
 use App\Service\ServerService;
 use App\Status\ServerStatus;
 use Docker\Docker;
-use Docker\DockerClientFactory;
 use Docker\API\Model\ContainersCreatePostBody;
 use Docker\API\Model\ContainersCreatePostResponse201;
 use Docker\API\Model\HostConfig;
@@ -15,6 +15,9 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class DockerService
 {
+    const WAKE_ON_LAN_IMAGE = 'jazzdd/wol';
+    const WAKE_ON_LAN_TAG = 'latest';
+
     /**
      * @var ServerService
      */
@@ -36,6 +39,11 @@ class DockerService
     private $manager;
 
     /**
+     * @var DockerFactory
+     */
+    private $factory;
+
+    /**
      * @var Docker
      */
     private $docker;
@@ -45,20 +53,22 @@ class DockerService
      * @param ServerProvider $provider
      * @param ServerHydrator $hydrator
      * @param EntityManagerInterface $manager
+     * @param DockerFactory $factory
      */
     public function __construct(
         ServerService $service,
         ServerProvider $provider,
         ServerHydrator $hydrator,
-        EntityManagerInterface $manager
+        EntityManagerInterface $manager,
+        DockerFactory $factory
     )
     {
         $this->service = $service;
         $this->provider = $provider;
         $this->hydrator = $hydrator;
         $this->manager = $manager;
-        $client = DockerClientFactory::create();
-        $this->docker = Docker::create($client);
+        $this->factory = $factory;
+        $this->docker = $this->factory->build();
     }
 
     /**
@@ -77,6 +87,7 @@ class DockerService
 
         try {
             $config = $this->config($server);
+            $this->pull(self::WAKE_ON_LAN_IMAGE, self::WAKE_ON_LAN_TAG);
             $container = $this->create($config);
             $this->start($container);
             $this->wait($container);
@@ -102,7 +113,7 @@ class DockerService
     protected function config(array $server): ContainersCreatePostBody
     {
         $config = new ContainersCreatePostBody();
-        $config->setImage('jazzdd/wol:latest');
+        $config->setImage(self::WAKE_ON_LAN_IMAGE);
         $config->setEnv([
             'mac=' . $server['mac'],
         ]);
@@ -111,6 +122,20 @@ class DockerService
         $config->setHostConfig($host);
 
         return $config;
+    }
+
+    /**
+     * @param string $image
+     * @param string $tag
+     */
+    protected function pull(string $image, string $tag): void
+    {
+        $image = $this->docker->imageCreate('', [
+            'fromImage' => $image,
+            'tag' => $tag
+        ]);
+
+        $image->wait();
     }
 
     /**
@@ -126,7 +151,7 @@ class DockerService
     /**
      * @param  ContainersCreatePostResponse201 $container
      */
-    protected function start(ContainersCreatePostResponse201 $container)
+    protected function start(ContainersCreatePostResponse201 $container): void
     {
         $this->docker->containerStart($container->getId());
     }
@@ -134,7 +159,7 @@ class DockerService
     /**
      * @param  ContainersCreatePostResponse201 $container
      */
-    protected function wait(ContainersCreatePostResponse201 $container)
+    protected function wait(ContainersCreatePostResponse201 $container): void
     {
         $this->docker->containerWait($container->getId());
     }
@@ -142,7 +167,7 @@ class DockerService
     /**
      * @param  ContainersCreatePostResponse201 $container
      */
-    protected function remove(ContainersCreatePostResponse201 $container)
+    protected function remove(ContainersCreatePostResponse201 $container): void
     {
         $this->docker->containerDelete($container->getId());
     }
