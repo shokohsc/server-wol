@@ -62,9 +62,9 @@ class WolService
     {
         $server = $this->service->read($id);
         $ping = new Ping($server['ip']);
-        $ping->setTtl(2);
-        $ping->setTimeout(1);
-        $latency = $ping->ping('fsockopen');
+        $ping->setTtl(50);
+        $ping->setTimeout(3);
+        $latency = $ping->ping();
 
         if ($latency !== false) {
             $server['status'] = ServerStatus::STATUS_AWAKE;
