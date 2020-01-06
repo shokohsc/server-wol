@@ -75,7 +75,7 @@ class DefaultController extends AbstractController
       * @Route("/wake/{id}", requirements={"id"="\d+"}, methods={"GET"}))
       * @Cache(expires="+10 seconds", public=true)
       */
-    public function wake(string $id, DockerService $service): JsonResponse
+    public function wake(string $id, WolService $service): JsonResponse
     {
         return new JsonResponse($service->wake($id));
     }
