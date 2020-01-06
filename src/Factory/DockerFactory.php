@@ -12,7 +12,7 @@ class DockerFactory
      */
     public function build(): Docker
     {
-        $client = DockerClientFactory::create();
+        $client = DockerClientFactory::createFromEnv();
 
         return Docker::create($client);
     }

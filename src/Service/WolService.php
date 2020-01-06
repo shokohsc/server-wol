@@ -94,7 +94,10 @@ class WolService
             return $server;
         }
 
-        $wol = new PHPWakeOnLan('192.168.1.255', 9);
+        $port = getenv('WOL_PORT') ? getenv('WOL_PORT'): 9;
+        $broadcast = getenv('WOL_BROADCAST') ? getenv('WOL_BROADCAST'): '255.255.255.255';
+
+        $wol = new PHPWakeOnLan($broadcast, $port);
         $wol->wake([$server['mac']]);
 
         $server['status'] = ServerStatus::STATUS_AWAKE;
