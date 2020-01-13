@@ -16,6 +16,7 @@ class DockerFactory
         if (\getenv('DOCKER_TLS_VERIFY') && 'true' === \getenv('DOCKER_TLS_VERIFY')) {
             $options = [
                 'allow_self_signed' => true,
+                'verify_peer' => false,
                 // 'cafile' => \getenv('DOCKER_CERT_PATH').DIRECTORY_SEPARATOR.'ca.pem',
                 'local_cert' => \getenv('DOCKER_CERT_PATH').DIRECTORY_SEPARATOR.'cert.pem',
                 'local_pk' => \getenv('DOCKER_CERT_PATH').DIRECTORY_SEPARATOR.'key.pem',

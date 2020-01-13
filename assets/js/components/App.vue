@@ -1,5 +1,7 @@
 <template>
     <div class="container">
+        <nav class="navbar">
+        </nav>
         <component :is="activeComponent"></component>
     </div>
 </template>
@@ -7,13 +9,13 @@
 <script>
     import Error from './Error.vue';
     import Loading from './Loading.vue';
-    import Servers from './Servers.vue';
+    import Networks from './Networks.vue';
 
     export default {
         components: {
             Loading,
             Error,
-            Servers
+            Networks
         },
         data() {
             return {
@@ -29,7 +31,7 @@
             this.$store.dispatch('servers/list')
             .then((response) => {
                 this.$store.commit('servers/setServers', response);
-                this.activeComponent = Servers;
+                this.activeComponent = Networks;
             })
             .catch((error) => {
                 console.log(error);

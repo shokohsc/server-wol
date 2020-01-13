@@ -20,19 +20,51 @@
     import Form from './Form.vue';
 
     export default {
-        props: ['server'],
+        data: function() {
+            return {
+                id: '',
+                name: '',
+                ip: '',
+                mac: '',
+                status: ''
+            };
+        },
         components: {
             Form
         },
         computed: {
+            server: function() {
+                return {
+                    id: this.id,
+                    name: this.name,
+                    ip: this.ip,
+                    mac: this.mac,
+                    status: this.status
+                };
+            },
             title: function() {
-                return '' === this.server.id ? 'Add Server' : 'Edit Server';
+                return '' === this.id ? 'Add Server' : 'Edit Server';
             }
         },
         methods: {
+            load: function(server) {
+                this.id = server.id;
+                this.name = server.name;
+                this.ip = server.ip;
+                this.mac = server.mac;
+                this.status = server.status;
+            },
             reset: function() {
-                this.$eventBus.$emit('reset-form');
+                this.id = '';
+                this.name = '';
+                this.ip = '';
+                this.mac = '';
+                this.status = '';
             }
+        },
+        created: function() {
+            this.$eventBus.$on('reset-form', () => this.reset());
+            this.$eventBus.$on('load-server', (server) => this.load(server));
         }
     };
 </script>
