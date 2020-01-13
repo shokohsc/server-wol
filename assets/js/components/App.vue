@@ -3,6 +3,7 @@
         <nav class="navbar">
         </nav>
         <component :is="activeComponent"></component>
+        <Modal />
     </div>
 </template>
 
@@ -10,9 +11,11 @@
     import Error from './Error.vue';
     import Loading from './Loading.vue';
     import Networks from './Networks.vue';
+    import Modal from './Modal.vue';
 
     export default {
         components: {
+            Modal,
             Loading,
             Error,
             Networks
@@ -25,9 +28,14 @@
         methods: {
             loading: function() {
                 this.activeComponent = Loading;
+            },
+            done: function() {
+                this.activeComponent = Networks;
             }
         },
         created: function() {
+            this.$eventBus.$on('loading', () => this.loading());
+            this.$eventBus.$on('done-loading', () => this.done());
             this.$store.dispatch('servers/list')
             .then((response) => {
                 this.$store.commit('servers/setServers', response);

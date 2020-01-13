@@ -98,6 +98,7 @@
                     this.errors.mac.push('Wrong Mac address.');
             },
             submit: function() {
+                this.$eventBus.$emit('loading');
                 const server = {
                     id: this.server.id,
                     name: this.server.name,
@@ -113,10 +114,12 @@
                         this.$eventBus.$emit('reset-form');
                         this.$store.dispatch('servers/refresh');
                         $('#exampleModal').modal('hide');
+                        this.$eventBus.$emit('done-loading');
                     })
                     .catch((error) => {
                         console.log(error);
                         $('#exampleModal').modal('hide');
+                        this.$eventBus.$emit('done-loading');
                     });
                 }
             }

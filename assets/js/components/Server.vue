@@ -1,11 +1,12 @@
 <template>
     <div class="col-lg-4 col-md-12 text-center my-2">
-        <div class="card bg-secondary">
-            <h1 @click="action(server)">{{ server.name }}</h1>
-            <div class="card-body text-center">
+        <div class="card bg-secondary text-center">
+            <img @click="action(server)" src="../../images/power.png" alt="power" width="50%" class="m-auto" style="cursor:grab;">
+            <div class="card-body">
                 <p class="text-center font-weight-bold">{{ server.status }}</p>
-                <p class="text-center">{{ server.ip }}</p>
+                <p class="text-center">{{ server.name }}</p>
                 <p class="text-center">{{ server.mac }}</p>
+                <p class="text-center">{{ server.ip }}</p>
                 <button @click="update(server)" type="button" class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#exampleModal">Edit</button>
                 <button @click="remove(server)" type="button" class="btn btn-danger btn-lg btn-block">Delete</button>
             </div>
@@ -62,26 +63,33 @@ export default {
             });
         },
         action: function(server) {
+            this.$eventBus.$emit('loading');
             'asleep' == server.status ? this.wake(server) : this.ping(server);
         },
         ping: function(server) {
             this.$store.dispatch('servers/ping', server.id)
             .then((response) => {
                 this.$store.dispatch('servers/refresh');
+                this.$eventBus.$emit('done-loading');
             })
             .catch((error) => {
+                this.$eventBus.$emit('done-loading');
                 this.$store.dispatch('servers/refresh');
                 console.log(error);
+                this.$eventBus.$emit('done-loading');
             });
         },
         wake: function(server) {
             this.$store.dispatch('servers/wake', server.id)
             .then((response) => {
                 this.$store.dispatch('servers/refresh');
+                this.$eventBus.$emit('done-loading');
             })
             .catch((error) => {
+                this.$eventBus.$emit('done-loading');
                 this.$store.dispatch('servers/refresh');
                 console.log(error);
+                this.$eventBus.$emit('done-loading');
             });
         }
     }
