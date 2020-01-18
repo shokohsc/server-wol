@@ -6,7 +6,6 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-intl": "^1.1",
-        "diegonz/php-wake-on-lan": "^2.1",
         "docker-php/docker-php": "^2.0",
         "geerlingguy/ping": "^1.1",
         "sensio/framework-extra-bundle": "^5.3",

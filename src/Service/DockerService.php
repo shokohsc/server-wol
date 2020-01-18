@@ -3,40 +3,23 @@
 namespace App\Service;
 
 use App\Factory\DockerFactory;
-use App\Hydrator\ServerHydrator;
-use App\Provider\ServerProvider;
-use App\Service\ServerService;
-use App\Status\ServerStatus;
 use Docker\Docker;
 use Docker\API\Model\ContainersCreatePostBody;
 use Docker\API\Model\ContainersCreatePostResponse201;
+use Docker\API\Model\DeviceMapping;
 use Docker\API\Model\HostConfig;
-use Doctrine\ORM\EntityManagerInterface;
+use Docker\Stream\DockerRawStream;
 
 class DockerService
 {
     const WAKE_ON_LAN_IMAGE = 'jazzdd/wol';
     const WAKE_ON_LAN_TAG = 'latest';
 
-    /**
-     * @var ServerService
-     */
-    private $service;
+    const PARSEC_IMAGE = 'alpine';
+    const PARSEC_TAG = 'latest';
 
-    /**
-     * @var ServerProvider
-     */
-    private $provider;
-
-    /**
-     * @var ServerHydrator
-     */
-    private $hydrator;
-
-    /**
-     * @var EntityManagerInterface
-     */
-    private $manager;
+    const ARP_IMAGE = 'alpine';
+    const ARP_TAG = 'latest';
 
     /**
      * @var DockerFactory
@@ -49,44 +32,23 @@ class DockerService
     private $docker;
 
     /**
-     * @param ServerService $service
-     * @param ServerProvider $provider
-     * @param ServerHydrator $hydrator
-     * @param EntityManagerInterface $manager
      * @param DockerFactory $factory
      */
-    public function __construct(
-        ServerService $service,
-        ServerProvider $provider,
-        ServerHydrator $hydrator,
-        EntityManagerInterface $manager,
-        DockerFactory $factory
-    )
+    public function __construct(DockerFactory $factory)
     {
-        $this->service = $service;
-        $this->provider = $provider;
-        $this->hydrator = $hydrator;
-        $this->manager = $manager;
         $this->factory = $factory;
         $this->docker = $this->factory->build();
     }
 
     /**
-     * @param  string $id
-     *
-     * @return array
+     * @param  string $mac
      *
      * @throws Exception
      */
-    public function wake(string $id): array
+    public function wake(string $mac): void
     {
-        $server = $this->service->read($id);
-        if ($server['status'] === ServerStatus::STATUS_AWAKE) {
-            return $server;
-        }
-
         try {
-            $config = $this->config($server);
+            $config = $this->configWakeOnLan($mac);
             $this->pull(self::WAKE_ON_LAN_IMAGE, self::WAKE_ON_LAN_TAG);
             $container = $this->create($config);
             $this->start($container);
@@ -95,31 +57,193 @@ class DockerService
         } catch (\Exception $e) {
             throw new \Exception(sprintf("Cannot use docker: %s", $e->getMessage()));
         }
-
-
-        $server['status'] = ServerStatus::STATUS_AWAKE;
-        $entity = $this->provider->find($server['id']);
-        $entity = $this->hydrator->hydrate($entity, $server);
-        $this->manager->flush();
-
-        return $server;
     }
 
     /**
-     * @param  array                    $server
+     * @param  string $mac
      *
      * @return ContainersCreatePostBody
      */
-    protected function config(array $server): ContainersCreatePostBody
+    protected function configWakeOnLan(string $mac): ContainersCreatePostBody
     {
         $config = new ContainersCreatePostBody();
         $config->setImage(self::WAKE_ON_LAN_IMAGE);
         $config->setEnv([
-            'mac=' . $server['mac'],
+            'mac=' . $mac,
         ]);
         $host = new HostConfig();
         $host->setNetworkMode('host');
         $config->setHostConfig($host);
+
+        return $config;
+    }
+
+    /**
+     * @param  string $mac
+     *
+     * @throws Exception
+     */
+    public function sleep(string $mac): void
+    {
+        try {
+            $config = $this->configSleepOnLan($mac);
+            $this->pull(self::WAKE_ON_LAN_IMAGE, self::WAKE_ON_LAN_TAG);
+            $container = $this->create($config);
+            $this->start($container);
+            $this->wait($container);
+            $this->remove($container);
+        } catch (\Exception $e) {
+            throw new \Exception(sprintf("Cannot use docker: %s", $e->getMessage()));
+        }
+    }
+
+    /**
+     * @param  string $mac
+     *
+     * @return ContainersCreatePostBody
+     */
+    protected function configSleepOnLan(string $mac): ContainersCreatePostBody
+    {
+        // https://github.com/SR-G/sleep-on-lan
+        $reversedMAC = implode(':', array_reverse(explode(':', $mac)));
+        $config = new ContainersCreatePostBody();
+        $config->setImage(self::WAKE_ON_LAN_IMAGE);
+        $config->setEnv([
+            'mac=' . $reversedMAC,
+        ]);
+        $host = new HostConfig();
+        $host->setNetworkMode('host');
+        $config->setHostConfig($host);
+
+        return $config;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function parsec(): void
+    {
+        try {
+            $flag = false;
+            $containers = $this->docker->containerList([
+                'all' => true,
+            ]);
+            foreach ($containers as $container) {
+                if ('/parsec' === $container->getNames()[0]) {
+                    $this->remove($container);
+                    $flag = true;
+                }
+            }
+
+            if ($flag) { return; }
+            $config = $this->configParsec();
+            $this->pull(self::PARSEC_IMAGE, self::PARSEC_TAG);
+            $container = $this->create($config, ['name' => 'parsec']);
+            $this->start($container);
+        } catch (\Exception $e) {
+            throw new \Exception(sprintf("Cannot use docker: %s", $e->getMessage()));
+        }
+    }
+
+    /**
+     * @return ContainersCreatePostBody
+     */
+    protected function configParsec(): ContainersCreatePostBody
+    {
+        $host = (new HostConfig())
+            ->setPidMode('host')
+            ->setPrivileged(true)
+        ;
+
+        $config = (new ContainersCreatePostBody())
+            ->setImage(self::PARSEC_IMAGE)
+            ->setEnv([
+                'DISPLAY=:0',
+            ])
+            ->setCmd([
+                'nsenter',
+                '-t',
+                '1',
+                '-m',
+                '-u',
+                '-n',
+                '-i',
+                // Works as cli but not with container ???
+                // '-S',
+                // // \getenv('PUID'),
+                // '1000',
+                // '-G',
+                // // \getenv('PGID'),
+                // '1000',
+                '/usr/bin/parsecd',
+                'peer_id=' . \getenv('PEER_ID'),
+                'encoder_bitrate=50',
+                'network_try_lan=1',
+                'client_vsync=1',
+                'client_fullscreen=0',
+                'client_windowed=0',
+                'client_window_x=1920',
+                'client_window_y=1080',
+                'client_overlay=0',
+                'decoder_software=0',
+                'client_audio_buffer=100000',
+                'server_admin_mute=0',
+            ])
+            ->setHostConfig($host)
+        ;
+
+        return $config;
+    }
+
+    /**
+     * @return array
+     *
+     * @throws Exception
+     */
+    public function arp(): array
+    {
+        $logs = [];
+        try {
+            $config = $this->configArp();
+            $this->pull(self::ARP_IMAGE, self::ARP_TAG);
+            $container = $this->create($config);
+            $stream = $this->attach($container);
+            $this->start($container);
+
+            $stream->onStdout(function($stdout) use (&$logs){
+                foreach (explode("\n", $stdout) as $output) {
+                    $logs[] = $output;
+                }
+            });
+
+            $stream->wait();
+            $this->wait($container);
+            $this->remove($container);
+        } catch (\Exception $e) {
+            throw new \Exception(sprintf("Cannot use docker: %s", $e->getMessage()));
+        }
+
+        return $logs;
+    }
+
+    /**
+     * @return ContainersCreatePostBody
+     */
+    protected function configArp(): ContainersCreatePostBody
+    {
+        $host = (new HostConfig())
+            ->setNetworkMode('host')
+        ;
+
+        $config = (new ContainersCreatePostBody())
+            ->setImage(self::ARP_IMAGE)
+            ->setHostConfig($host)
+            ->setAttachStdout(true)
+            ->setCmd([
+                'arp',
+                '-a',
+            ])
+        ;
 
         return $config;
     }
@@ -140,12 +264,13 @@ class DockerService
 
     /**
      * @param  ContainersCreatePostBody $config
+     * @param  array                    $queryParameters
      *
      * @return ContainersCreatePostResponse201
      */
-    protected function create(ContainersCreatePostBody $config): ContainersCreatePostResponse201
+    protected function create(ContainersCreatePostBody $config, array $queryParameters = []): ContainersCreatePostResponse201
     {
-        return $this->docker->containerCreate($config);
+        return $this->docker->containerCreate($config, $queryParameters);
     }
 
     /**
@@ -157,6 +282,14 @@ class DockerService
     }
 
     /**
+     * @param  $container
+     */
+    protected function stop($container): void
+    {
+        $this->docker->containerStop($container->getId());
+    }
+
+    /**
      * @param  ContainersCreatePostResponse201 $container
      */
     protected function wait(ContainersCreatePostResponse201 $container): void
@@ -165,10 +298,27 @@ class DockerService
     }
 
     /**
-     * @param  ContainersCreatePostResponse201 $container
+     * @param  $container
      */
-    protected function remove(ContainersCreatePostResponse201 $container): void
+    protected function remove($container): void
     {
-        $this->docker->containerDelete($container->getId());
+        $this->docker->containerDelete($container->getId(), [
+            'v' => true,
+            'force' => true,
+        ]);
+    }
+
+    /**
+     * @param  $container
+     *
+     * @return DockerRawStream
+     */
+    protected function attach($container): DockerRawStream
+    {
+        return $this->docker->containerAttach($container->getId(), [
+            'stream' => true,
+            'stdout' => true,
+            'logs' => true,
+        ]);
     }
 }

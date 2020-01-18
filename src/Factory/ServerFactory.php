@@ -15,8 +15,6 @@ class ServerFactory
     public function build(array $data): Server
     {
         return (new Server)
-            ->setName($data['name'])
-            ->setIp($data['ip'])
             ->setMac($data['mac'])
             ->setStatus(ServerStatus::STATUS_ASLEEP)
         ;

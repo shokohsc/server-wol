@@ -1,7 +1,17 @@
 <template>
-    <div class="col-lg-4 col-md-12 text-center my-2">
+    <div class="col-lg-4 col-md-12 text-center my-2 py-2">
         <div class="card bg-secondary text-center">
-            <img @click="action(server)" src="../../images/power.png" alt="power" width="50%" class="m-auto" style="cursor:grab;">
+            <div class="row">
+                <div class="col-sm-12">
+                    <img @click="ping(server)" src="../../images/ping.png" alt="ping" width="50%" class="m-auto py-2" style="cursor:pointer;">
+                </div>
+                <div class="col-sm-6">
+                    <img @click="power(server)" src="../../images/power.png" alt="power" width="50%" class="m-auto py-2" style="cursor:pointer;">
+                </div>
+                <div class="col-sm-6">
+                    <img @click="play(server)" src="../../images/parsec.png" alt="parsec" width="50%" class="m-auto py-2" style="cursor:pointer;">
+                </div>
+            </div>
             <div class="card-body">
                 <p class="text-center font-weight-bold">{{ server.status }}</p>
                 <p class="text-center">{{ server.name }}</p>
@@ -62,34 +72,46 @@ export default {
                 console.log(error);
             });
         },
-        action: function(server) {
-            this.$eventBus.$emit('loading');
-            'asleep' == server.status ? this.wake(server) : this.ping(server);
+        end: function(data) {
+            console.log(data);
+            this.$store.dispatch('servers/refresh');
+            this.$eventBus.$emit('done-loading');
         },
+
+        power: function(server) {
+            this.ping(server).then((response) => {
+                'asleep' == response.status ? this.wake(response) : this.sleep(response);
+            });
+        },
+        play: function(server) {
+            this.ping(server).then((response) => {
+                'asleep' == response.status ? this.wake(response) : this.parsec(response);
+            });
+        },
+
         ping: function(server) {
-            this.$store.dispatch('servers/ping', server.id)
-            .then((response) => {
-                this.$store.dispatch('servers/refresh');
-                this.$eventBus.$emit('done-loading');
-            })
-            .catch((error) => {
-                this.$eventBus.$emit('done-loading');
-                this.$store.dispatch('servers/refresh');
-                console.log(error);
-                this.$eventBus.$emit('done-loading');
+            this.$eventBus.$emit('loading');
+            return this.$store.dispatch('servers/ping', server.id)
+            .always((data) => {
+                this.end(data);
             });
         },
         wake: function(server) {
             this.$store.dispatch('servers/wake', server.id)
-            .then((response) => {
-                this.$store.dispatch('servers/refresh');
-                this.$eventBus.$emit('done-loading');
-            })
-            .catch((error) => {
-                this.$eventBus.$emit('done-loading');
-                this.$store.dispatch('servers/refresh');
-                console.log(error);
-                this.$eventBus.$emit('done-loading');
+            .always((data) => {
+                this.end(data);
+            });
+        },
+        sleep: function(server) {
+            this.$store.dispatch('servers/sleep', server.id)
+            .always((data) => {
+                this.end(data);
+            });
+        },
+        parsec: function(server) {
+            this.$store.dispatch('servers/parsec', server.id)
+            .always((data) => {
+                this.end(data);
             });
         }
     }

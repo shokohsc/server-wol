@@ -26,8 +26,14 @@ const actions = {
     wake({}, id) {
         return servers.wake(id);
     },
+    sleep({}, id) {
+        return servers.sleep(id);
+    },
     ping({}, id) {
         return servers.ping(id);
+    },
+    parsec({}, id) {
+        return servers.parsec(id);
     },
     create({}, data) {
         return servers.create(data);

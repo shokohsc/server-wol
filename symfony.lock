@@ -2,9 +2,6 @@
     "clue/stream-filter": {
         "version": "v1.4.1"
     },
-    "diegonz/php-wake-on-lan": {
-        "version": "v2.1.0"
-    },
     "docker-php/docker-php": {
         "version": "v2.0.0"
     },

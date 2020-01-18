@@ -9,6 +9,7 @@ use App\Exception\WrongMacException;
 use App\Factory\ServerFactory;
 use App\Hydrator\ServerHydrator;
 use App\Provider\ServerProvider;
+use App\Service\NetworkService;
 use App\Status\ServerStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,22 +38,30 @@ class ServerService
     private $provider;
 
     /**
+     * @var NetworkService
+     */
+    private $service;
+
+    /**
     * @param ServerFactory $factory
     * @param ServerHydrator $hydrator
     * @param EntityManagerInterface $manager
     * @param ServerProvider $provider
+    * @param NetworkService $service
      */
     public function __construct(
         ServerFactory $factory,
         ServerHydrator $hydrator,
         EntityManagerInterface $manager,
-        ServerProvider $provider
+        ServerProvider $provider,
+        NetworkService $service
     )
     {
         $this->factory = $factory;
         $this->hydrator = $hydrator;
         $this->manager = $manager;
         $this->provider = $provider;
+        $this->service = $service;
     }
 
     /**
@@ -90,6 +99,10 @@ class ServerService
     {
         $this->validate($request);
         $server = $this->factory->build($request->request->all());
+
+        $server->setName($this->service->getServerHostname($server->getMac()));
+        $server->setIp($this->service->getServerIp($server->getMac()));
+
         $this->manager->persist($server);
         $this->manager->flush();
 
@@ -106,6 +119,10 @@ class ServerService
     {
         $server = $this->provider->find($id);
         $this->validate($request);
+
+        $server->setName($this->service->getServerHostname($server->getMac()));
+        $server->setIp($this->service->getServerIp($server->getMac()));
+
         $server = $this->hydrator->hydrate($server, $request->request->all());
         $this->manager->flush();
 
@@ -127,6 +144,21 @@ class ServerService
     }
 
     /**
+     * @param  string $id
+     * @param  string $status
+     *
+     * @return array
+     */
+    public function updateStatus(string $id, string $status): array
+    {
+        $server = $this->provider->find($id);
+        $server->setStatus($status);
+        $this->manager->flush();
+
+        return $this->serialize($server);
+    }
+
+    /**
      * @param  Request $request
      *
      * @throws EmptyNameException
@@ -135,13 +167,7 @@ class ServerService
      */
     protected function validate(Request $request)
     {
-        $name = $request->request->get('name');
-        $ip = $request->request->get('ip');
         $mac = $request->request->get('mac');
-        if (empty($name))
-            throw new EmptyNameException;
-        if (!\preg_match('/(\d+)\.(\d+)\.(\d+)\.(\d+)/', $ip))
-            throw new WrongIpException;
         if (!\preg_match('/(([a-z]|[A-Z]|[0-9]){2})\:(([a-z]|[A-Z]|[0-9]){2})\:(([a-z]|[A-Z]|[0-9]){2})\:(([a-z]|[A-Z]|[0-9]){2})\:(([a-z]|[A-Z]|[0-9]){2})\:(([a-z]|[A-Z]|[0-9]){2})/', $mac))
             throw new WrongMacException;
     }

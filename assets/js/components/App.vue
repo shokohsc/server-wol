@@ -36,8 +36,10 @@
         created: function() {
             this.$eventBus.$on('loading', () => this.loading());
             this.$eventBus.$on('done-loading', () => this.done());
+
             this.$store.dispatch('servers/list')
             .then((response) => {
+                console.log(response);
                 this.$store.commit('servers/setServers', response);
                 this.activeComponent = Networks;
             })
