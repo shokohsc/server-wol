@@ -6,7 +6,8 @@
                     <img @click="ping(server)" src="../../images/ping.png" alt="ping" width="50%" class="m-auto py-2" style="cursor:pointer;">
                 </div>
                 <div class="col-sm-6">
-                    <img @click="power(server)" src="../../images/power.png" alt="power" width="50%" class="m-auto py-2" style="cursor:pointer;">
+                    <img @click="power(server)" v-if="'asleep' == server.status" src="../../images/power-off.png" alt="power" width="50%" class="m-auto py-2" style="cursor:pointer;">
+                    <img @click="power(server)" v-else src="../../images/power-on.png" alt="power" width="50%" class="m-auto py-2" style="cursor:pointer;">
                 </div>
                 <div class="col-sm-6">
                     <img @click="play(server)" src="../../images/parsec.png" alt="parsec" width="50%" class="m-auto py-2" style="cursor:pointer;">
