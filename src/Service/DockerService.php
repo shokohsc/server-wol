@@ -155,6 +155,21 @@ class DockerService
             ->setPrivileged(true)
         ;
 
+        $parsecOptions = [
+            'peer_id=' . \getenv('PEER_ID'),
+            'encoder_bitrate=50',
+            'network_try_lan=1',
+            'client_vsync=1',
+            'client_fullscreen=0',
+            'client_windowed=0',
+            'client_window_x=1920',
+            'client_window_y=1080',
+            'client_overlay=0',
+            'decoder_software=0',
+            'client_audio_buffer=100000',
+            'server_admin_mute=0',
+        ];
+
         $config = (new ContainersCreatePostBody())
             ->setImage(self::PARSEC_IMAGE)
             ->setEnv([
@@ -176,18 +191,7 @@ class DockerService
                 // // \getenv('PGID'),
                 // '1000',
                 '/usr/bin/parsecd',
-                'peer_id=' . \getenv('PEER_ID'),
-                'encoder_bitrate=50',
-                'network_try_lan=1',
-                'client_vsync=1',
-                'client_fullscreen=0',
-                'client_windowed=0',
-                'client_window_x=1920',
-                'client_window_y=1080',
-                'client_overlay=0',
-                'decoder_software=0',
-                'client_audio_buffer=100000',
-                'server_admin_mute=0',
+                implode(':', $parsecOptions),
             ])
             ->setHostConfig($host)
         ;
