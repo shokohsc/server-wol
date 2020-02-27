@@ -165,18 +165,19 @@ class DockerService
             'server_admin_mute=0',
         ];
 
+        $devices = (new DeviceMapping())
+            ->setPathOnHost('/dev/dri')
+            ->setPathInContainer('/dev/dri')
+            ->setCgroupPermissions('ro')
+        ;
+
         $host = (new HostConfig())
             ->setBinds([
                 '/tmp/.X11-unix:/tmp/.X11-unix:ro',
                 '/run/user/'.\getenv('PUID').':/run/pulse:ro',
                 'parsec_data:/home/parsec',
             ])
-        ;
-
-        $devices = (new DeviceMapping())
-            ->setPathOnHost('/dev/dri')
-            ->setPathInContainer('/dev/dri')
-            ->setCgroupPermissions('ro')
+            ->setDevices($devices)
         ;
 
         $config = (new ContainersCreatePostBody())
@@ -191,7 +192,6 @@ class DockerService
                 implode(':', $parsecOptions),
             ])
             ->setHostConfig($host)
-            ->setDevices($devices)
         ;
 
         return $config;
