@@ -177,7 +177,9 @@ class DockerService
                 '/run/user/'.\getenv('PUID').':/run/pulse:ro',
                 'parsec_data:/home/parsec',
             ])
-            ->setDevices($devices)
+            ->setDevices([
+                $devices,
+            ])
         ;
 
         $config = (new ContainersCreatePostBody())
