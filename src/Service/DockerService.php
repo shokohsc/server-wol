@@ -163,12 +163,13 @@ class DockerService
             'decoder_software=0',
             'client_audio_buffer=100000',
             'server_admin_mute=0',
+            'app_daemon=0',
         ];
 
         $devices = (new DeviceMapping())
             ->setPathOnHost('/dev/dri')
             ->setPathInContainer('/dev/dri')
-            ->setCgroupPermissions('ro')
+            ->setCgroupPermissions('rwm')
         ;
 
         $host = (new HostConfig())
