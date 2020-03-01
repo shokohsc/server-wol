@@ -175,7 +175,7 @@ class DockerService
         $host = (new HostConfig())
             ->setBinds([
                 '/tmp/.X11-unix:/tmp/.X11-unix:ro',
-                '/run/user/'.\getenv('PUID').':/run/pulse:ro',
+                '/run/user/'.\getenv('PUID').'/pulse:/run/pulse:ro',
                 'parsec_data:/home/parsec',
             ])
             ->setDevices([
