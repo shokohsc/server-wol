@@ -197,6 +197,10 @@ class DockerService
             ->setHostConfig($host)
         ;
 
+        $host = new HostConfig();
+        $host->setNetworkMode('host');
+        $config->setHostConfig($host);
+
         return $config;
     }
 
