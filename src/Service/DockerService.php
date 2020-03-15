@@ -150,6 +150,12 @@ class DockerService
      */
     protected function configParsec(): ContainersCreatePostBody
     {
+        $host = (new HostConfig())
+            ->setPidMode('host')
+            ->setPrivileged(true)
+            // ->setNetworkMode('host')
+        ;
+
         $parsecOptions = [
             'peer_id=' . \getenv('PEER_ID'),
             'encoder_bitrate=50',
@@ -166,40 +172,31 @@ class DockerService
             'app_daemon=0',
         ];
 
-        $devices = (new DeviceMapping())
-            ->setPathOnHost('/dev/dri')
-            ->setPathInContainer('/dev/dri')
-            ->setCgroupPermissions('rwm')
-        ;
-
-        $host = (new HostConfig())
-            ->setBinds([
-                '/tmp/.X11-unix:/tmp/.X11-unix:ro',
-                '/run/user/'.\getenv('PUID').'/pulse:/run/pulse:ro',
-                'parsec_data:/home/parsec',
-            ])
-            ->setDevices([
-                $devices,
-            ])
-        ;
-
         $config = (new ContainersCreatePostBody())
             ->setImage(self::PARSEC_IMAGE)
             ->setEnv([
-                'DISPLAY=unix:0',
-                'USER_UID='.\getenv('PUID'),
-                'USER_GID='.\getenv('PGID'),
+                'DISPLAY=:0',
             ])
             ->setCmd([
+                'nsenter',
+                '-t',
+                '1',
+                '-m',
+                '-u',
+                '-n',
+                '-i',
+                // Works as cli but not with container ???
+                // '-S',
+                // // \getenv('PUID'),
+                // '1000',
+                // '-G',
+                // // \getenv('PGID'),
+                // '1000',
                 '/usr/bin/parsecd',
                 implode(':', $parsecOptions),
             ])
             ->setHostConfig($host)
         ;
-
-        $host = new HostConfig();
-        $host->setNetworkMode('host');
-        $config->setHostConfig($host);
 
         return $config;
     }
