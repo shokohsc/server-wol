@@ -15,7 +15,7 @@ class DockerService
     const WAKE_ON_LAN_IMAGE = 'jazzdd/wol';
     const WAKE_ON_LAN_TAG = 'latest';
 
-    const PARSEC_IMAGE = 'jfyne/parsec';
+    const PARSEC_IMAGE = 'alpine';
     const PARSEC_TAG = 'latest';
 
     const ARP_IMAGE = 'alpine';
