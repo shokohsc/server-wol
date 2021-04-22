@@ -9,14 +9,14 @@
         "docker-php/docker-php": "^2.0",
         "geerlingguy/ping": "^1.1",
         "sensio/framework-extra-bundle": "^5.3",
-        "symfony/console": "4.2.*",
-        "symfony/dotenv": "4.2.*",
-        "symfony/flex": "^1.1",
-        "symfony/framework-bundle": "4.2.*",
-        "symfony/orm-pack": "^1.0",
-        "symfony/twig-bundle": "4.2.*",
-        "symfony/webpack-encore-bundle": "^1.5",
-        "symfony/yaml": "4.2.*"
+        "symfony/console": "4.2.8",
+        "symfony/dotenv": "4.2.8",
+        "symfony/flex": "1.2.5",
+        "symfony/framework-bundle": "4.2.8",
+        "symfony/orm-pack": "1.0.6",
+        "symfony/twig-bundle": "4.2.8",
+        "symfony/webpack-encore-bundle": "1.5.0",
+        "symfony/yaml": "4.2.8"
     },
     "config": {
         "preferred-install": {
@@ -64,8 +64,8 @@
         }
     },
     "require-dev": {
-        "symfony/debug-pack": "^1.0",
-        "symfony/maker-bundle": "^1.11",
-        "symfony/profiler-pack": "^1.0"
+        "symfony/debug-pack": "1.0.7",
+        "symfony/maker-bundle": "1.11.6",
+        "symfony/profiler-pack": "1.0.4"
     }
 }
